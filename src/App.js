@@ -1,68 +1,108 @@
 import { useState } from "react";
 
-////////////////////////////////////////////////////////////////////////////////////////////////
-//START/////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////
+export function ProductRow({ product }) {
+  let name = product.stocked ? (
+    <span style={{ color: "limeGreen" }}>{product.name}</span>
+  ) : (
+    <span style={{ color: "red" }}>{product.name}</span>
+  );
 
-export function ProductRow() {
-  return <div>ProductRow</div>;
-}
-
-export function ProductCategoryRow() {
-  return <div>ProductCategoryRow</div>;
-}
-
-export function ProductTable() {
-  return <div>ProductTable</div>;
-}
-
-export function SearchBar({ handleChange, searchValue, checkedStatus }) {
   return (
-    <div>
+    <tr>
+      <td>{name}</td>
+      <td>{product.price}</td>
+    </tr>
+  );
+}
+
+export function ProductCategoryRow({ category }) {
+  return (
+    <tr>
+      <th colSpan="2">{category}</th>
+    </tr>
+  );
+}
+
+export function ProductTable({ products, filterText, inStockOnly }) {
+  const rows = [];
+  let nextCategory = null;
+
+  products.forEach((product) => {
+    if (product.name.toLowerCase().indexOf(filterText.toLowerCase()) === -1) {
+      return;
+    }
+    if (inStockOnly && !product.stocked) {
+      return;
+    }
+    if (product.category !== nextCategory) {
+      rows.push(
+        <ProductCategoryRow
+          category={product.category}
+          key={product.category}
+        />
+      );
+    }
+    rows.push(<ProductRow product={product} key={product.name} />);
+    nextCategory = product.category;
+  });
+
+  return (
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Price</th>
+        </tr>
+      </thead>
+      <tbody>{rows}</tbody>
+    </table>
+  );
+}
+
+export function SearchBar({
+  filterText,
+  inStockOnly,
+  onFilterTextChange,
+  onInStockOnlyChange,
+}) {
+  return (
+    <form>
       <input
         type="text"
-        onChange={handleChange}
-        value={searchValue}
+        value={filterText}
         placeholder="Search..."
+        onChange={(e) => onFilterTextChange(e.target.value)}
       ></input>
-      <div>
-        <input type="checkbox" onClick={checkedStatus}></input>
-        <span>Only show products in stock</span>
-      </div>
-    </div>
+      <label>
+        <input
+          type="checkbox"
+          checked={inStockOnly}
+          onChange={(e) => onInStockOnlyChange(e.target.checked)}
+        />
+
+        {!inStockOnly ? "Show all products" : "Only show products in stock"}
+      </label>
+    </form>
   );
 }
 
 export function FilterableProductTable({ products }) {
-  const [searchValue, setSearchValue] = useState("");
-  const [isChecked, setIsChecked] = useState(false);
-
-  const handleChange = (e) => {
-    setSearchValue(e.target.value);
-  };
-  const checkedStatus = () => {
-    console.log("isChecked=>", "box checked!");
-    return !isChecked && setIsChecked(true);
-  };
-
-  function validate() {
-    if (document.querySelector(".sch").checked) {
-      alert("checked");
-    } else {
-      alert("You didn't check it! Let me check it for you.");
-    }
-  }
-  validate();
+  const [filterText, setFilterText] = useState("");
+  const [inStockOnly, setInStockOnly] = useState(false);
 
   return (
     <div>
       <SearchBar
-        className="sch"
-        searchValue={searchValue}
-        handleChange={handleChange}
-        isChecked={checkedStatus}
+        filterText={filterText}
+        inStockOnly={inStockOnly}
+        onFilterTextChange={setFilterText}
+        onInStockOnlyChange={setInStockOnly}
       ></SearchBar>
-      <ProductTable products={products}></ProductTable>
+      <ProductTable
+        products={products}
+        filterText={filterText}
+        inStockOnly={inStockOnly}
+      ></ProductTable>
     </div>
   );
 }
@@ -76,12 +116,10 @@ const PRODUCTS = [
   { category: "Vegetables", price: "$1", stocked: true, name: "Peas" },
 ];
 
-function App() {
+export default function App() {
   return (
     <>
       <FilterableProductTable products={PRODUCTS} />
     </>
   );
 }
-
-export default App;
